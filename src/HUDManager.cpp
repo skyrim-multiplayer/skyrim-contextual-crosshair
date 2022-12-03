@@ -77,9 +77,7 @@ bool HUDManager::ValidAttackType(RE::PlayerCharacter* player)
 
 	if (equipped && equipped->GetFormType() == RE::FormType::Weapon) {
 		auto weapon = equipped->As<RE::TESObjectWEAP>();
-		if (weapon->IsBow()) {
-			return attackState == RE::ATTACK_STATE_ENUM::kBowAttached || attackState == RE::ATTACK_STATE_ENUM::kBowDraw || attackState == RE::ATTACK_STATE_ENUM::kBowDrawn || attackState == RE::ATTACK_STATE_ENUM::kBowReleasing || attackState == RE::ATTACK_STATE_ENUM::kBowReleased || attackState == RE::ATTACK_STATE_ENUM::kNextAttack || attackState == RE::ATTACK_STATE_ENUM::kBowNextAttack;
-		} else if (weapon->IsCrossbow()) {
+		if (weapon->IsCrossbow()) {
 			auto recovery = attackState == RE::ATTACK_STATE_ENUM::kBowAttached || attackState == RE::ATTACK_STATE_ENUM::kBowReleasing || attackState == RE::ATTACK_STATE_ENUM::kBowReleased || attackState == RE::ATTACK_STATE_ENUM::kNextAttack;
 			fadeMult *= recovery ? 0.03125 : 8;
 			return (recovery || attackState == RE::ATTACK_STATE_ENUM::kBowDraw || attackState == RE::ATTACK_STATE_ENUM::kBowDrawn);
@@ -100,13 +98,12 @@ bool HUDManager::ValidDrawnState(RE::PlayerCharacter* player)
 {
 	switch (Settings::GetSingleton()->GetCrosshairMode()) {
 	case 1:
-		if (player->AsActorState()->GetWeaponState() == RE::WEAPON_STATE::kDrawn)
-		{
+		if (player->AsActorState()->GetWeaponState() == RE::WEAPON_STATE::kDrawn) {
 			bool validWeaponType = false;
 
 			if (auto equipped = player->GetEquippedObject(true)) {
 				if (auto weapon = equipped->As<RE::TESObjectWEAP>()) {
-					if (weapon->IsBow() || weapon->IsCrossbow())
+					if (weapon->IsCrossbow())
 						validWeaponType = true;
 					else if (weapon->IsStaff() && weapon->formEnchanting && ValidSpellType(weapon->formEnchanting))
 						validWeaponType = true;
@@ -171,7 +168,7 @@ void HUDManager::UpdateHUD(RE::PlayerCharacter* player, double detectionLevel, R
 
 	auto fadeIn = !(SmoothCam || TDM) && (ValidDrawnState(player) || ValidCastType(player->GetActorRuntimeData().magicCasters[0]) || ValidCastType(player->GetActorRuntimeData().magicCasters[1]) || ValidAttackType(player));
 
-	fadeMult = std::lerp(prevFadeMult, fadeIn ? fadeMult: fadeMult * 16, prevDelta / fadeMult);
+	fadeMult = std::lerp(prevFadeMult, fadeIn ? fadeMult : fadeMult * 16, prevDelta / fadeMult);
 	prevFadeMult = fadeMult;
 
 	timer += prevDelta;
@@ -183,8 +180,9 @@ void HUDManager::UpdateHUD(RE::PlayerCharacter* player, double detectionLevel, R
 	if (player->IsSneaking()) {
 		if (settings->GetSneakMeterMode())
 			detectionLevel = 100.0;
-		double newAlpha = !((SmoothCam && settings->GetSmoothCamMode() == 0) || TDM) ? std::clamp(DetectionMeter ? modAlpha : detectionLevel + modAlpha, 0.0, 100.0) : DetectionMeter ? 0.0 : detectionLevel / 2;
-		newAlpha = (newAlpha * 0.01 * (settings->GetSneakMeterMaxOpacity() - settings->GetSneakMeterMinOpacity())) +  settings->GetSneakMeterMinOpacity();
+		double newAlpha = !((SmoothCam && settings->GetSmoothCamMode() == 0) || TDM) ? std::clamp(DetectionMeter ? modAlpha : detectionLevel + modAlpha, 0.0, 100.0) : DetectionMeter ? 0.0 :
+		                                                                                                                                                                                detectionLevel / 2;
+		newAlpha = (newAlpha * 0.01 * (settings->GetSneakMeterMaxOpacity() - settings->GetSneakMeterMinOpacity())) + settings->GetSneakMeterMinOpacity();
 		sneakAlpha = std::lerp(sneakAlpha, newAlpha, prevDelta * fadeMult);
 		auto detectionFreq = (detectionLevel / 200) + 0.5f;
 		auto pulse = (settings->GetSneakMeterRange() * sin(2 * (M_PI * 2) * detectionFreq * settings->GetSneakMeterFrequency() * 0.25f * timer)) + (1.0f - settings->GetSneakMeterRange());
